@@ -1,0 +1,5 @@
+{
+    "salesforcedx-vscode-lwc.enableJavascriptLinting": false,
+    "xml.preferences.showSchemaDocumentationType": "none"
+
+}
