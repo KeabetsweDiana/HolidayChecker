@@ -3,26 +3,45 @@
         <div class="slds-media__body">
             <div class="custom-container">
 
-                <p class="instruction-text">Enter your ID number to see if there are any important public holidays on your date of birth</p>
+                <p class="instruction-text">
+                    Enter your ID number to see if there are any important public holidays on your date of birth
+                </p>
 
-                <lightning-input class="white-label" label="Enter ID Number" type="text" value={idNumber} onchange={handleIdChange}></lightning-input>
-                <lightning-input class="white-label" label="Enter your name" type="text" value={name} onchange={handleNameChange}></lightning-input>
+                <lightning-input class="white-label" 
+                                 label="Enter ID Number" 
+                                 type="text" 
+                                 value={idNumber} 
+                                 onchange={handleIdChange}>
+                </lightning-input>
 
-                <lightning-button class="button" label="Search" onclick={searchHolidays} disabled={isSearchDisabled}></lightning-button>
+                <lightning-input class="white-label" 
+                                 label="Enter your name" 
+                                 type="text" 
+                                 value={name} 
+                                 onchange={handleNameChange}>
+                </lightning-input>
+
+                <lightning-button class="button" 
+                                  label="Search" 
+                                  onclick={searchHolidays} 
+                                  disabled={isSearchDisabled}>
+                </lightning-button>
 
                 <!-- USER DETAILS -->
                 <template if:true={description}>
                     <p>{description}</p>
                 </template>
 
-                <!-- HOLIDAY LIST FROM API -->
+                <!-- ERROR -->
+                <div if:true={showError} class="error-message">
+                    {errorMessage}
+                </div>
+
+                <!-- HOLIDAYS FROM API -->
                 <template if:true={holidayDescription}>
                     <p><b>Public holidays in your birth year:</b></p>
                     <p>{holidayDescription}</p>
                 </template>
-
-                <!-- ERROR MESSAGE -->
-                <div if:true={showError} class="error-message">{errorMessage}</div>
 
             </div>
         </div>

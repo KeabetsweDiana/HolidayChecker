@@ -1,21 +1,18 @@
 public with sharing class HolidayCheckerController {
 
-    // MAIN METHOD CALLED FROM LWC
     @AuraEnabled
     public static HolidaysResponse checkHolidays(String idNumber) {
-
         HolidaysResponse response = new HolidaysResponse();
 
-        // 1️⃣ Extract YYYY from SA ID Number
-        if (String.isBlank(idNumber) || idNumber.length() < 6) {
-            response.setMessage('Invalid ID number.');
+        // 🔒 FULL SA ID VALIDATION
+        if (!isValidSouthAfricanId(idNumber)) {
+            response.setMessage('Invalid ID number. Please enter a valid South African ID.');
             return response;
         }
 
-        // SA ID Number: YYMMDD
+        // ✔ Extract year from SA ID
         String yy = idNumber.substring(0, 2);
         Integer year = getFullYearFromYY(yy);
-
         response.setYear(String.valueOf(year));
 
         // 2️⃣ Build Calendarific API URL
@@ -28,7 +25,6 @@ public with sharing class HolidayCheckerController {
             + '&country=' + country
             + '&year=' + year;
 
-        // 3️⃣ CALL THE API
         HttpRequest req = new HttpRequest();
         req.setEndpoint(url);
         req.setMethod('GET');
@@ -43,10 +39,7 @@ public with sharing class HolidayCheckerController {
             return response;
         }
 
-        // 4️⃣ Parse JSON response
         if (apiResponse.getStatusCode() == 200) {
-
-            // ❗ Renamed from "outer" → "root"
             Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(apiResponse.getBody());
             Map<String, Object> responseMap = (Map<String, Object>) root.get('response');
 
@@ -79,24 +72,63 @@ public with sharing class HolidayCheckerController {
         Integer year = Integer.valueOf(yy);
 
         // SA ID logic: 00–24 = 2000–2024, else 1925–1999
-        if (year <= 24) {
-            return 2000 + year;
-        } else {
-            return 1900 + year;
-        }
+        if (year <= 24) return 2000 + year;
+        return 1900 + year;
     }
 
-    // ❇ RESPONSE CLASS — FIXED
-    public class HolidaysResponse {
+    // 🔒 FULL SOUTH AFRICAN ID VALIDATOR
+    private static Boolean isValidSouthAfricanId(String id) {
+        if (String.isBlank(id) || id.length() != 13) 
+            return false;
 
+        // Validate date (YYMMDD)
+        String birth = id.substring(0, 6);
+        if (!isValidDate(birth))
+            return false;
+
+        // Luhn check
+        return luhnCheck(id);
+    }
+
+    // DATE VALIDATION FOR YYMMDD
+    private static Boolean isValidDate(String birth) {
+        try {
+            Date d = Date.valueOf('20' + birth.substring(0, 2) 
+                + '-' + birth.substring(2, 4) 
+                + '-' + birth.substring(4, 6));
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+   private static Boolean luhnCheck(String id) {
+    Integer sum = 0;
+    Boolean alt = false;
+
+    for (Integer i = id.length() - 1; i >= 0; i--) {
+        Integer digit = Integer.valueOf(id.substring(i, i + 1));
+
+        if (alt) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+
+        sum += digit;
+        alt = !alt;
+    }
+
+    return (Math.mod(sum, 10) == 0);
+}
+
+
+    public class HolidaysResponse {
         @AuraEnabled public String message { get; private set; }
         @AuraEnabled public String year { get; private set; }
         @AuraEnabled public String description { get; private set; }
 
         public void setMessage(String message)   { this.message = message; }
         public void setYear(String year)         { this.year = year; }
-        public void setDescription(String descriptionValue) {
-        this.description = descriptionValue;
-}
+        public void setDescription(String descriptionValue) { this.description = descriptionValue; }
     }
 }
