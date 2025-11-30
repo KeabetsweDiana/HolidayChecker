@@ -1,18 +1,24 @@
 public with sharing class HolidayCheckerController {
 
+    // MAIN METHOD CALLED FROM LWC
     @AuraEnabled
     public static HolidaysResponse checkHolidays(String idNumber) {
+
         HolidaysResponse response = new HolidaysResponse();
 
-        // 🔒 FULL SA ID VALIDATION
-        if (!isValidSouthAfricanId(idNumber)) {
-            response.setMessage('Invalid ID number. Please enter a valid South African ID.');
+        // 1️⃣ Extract YYYY, MM, DD from SA ID Number
+        if (String.isBlank(idNumber) || idNumber.length() < 6) {
+            response.setMessage('Invalid ID number.');
             return response;
         }
 
-        // ✔ Extract year from SA ID
+        // SA ID Number: YYMMDD
         String yy = idNumber.substring(0, 2);
         Integer year = getFullYearFromYY(yy);
+
+        Integer birthMonth = Integer.valueOf(idNumber.substring(2, 4));
+        Integer birthDay   = Integer.valueOf(idNumber.substring(4, 6));
+
         response.setYear(String.valueOf(year));
 
         // 2️⃣ Build Calendarific API URL
@@ -25,6 +31,7 @@ public with sharing class HolidayCheckerController {
             + '&country=' + country
             + '&year=' + year;
 
+        // 3️⃣ CALL THE API
         HttpRequest req = new HttpRequest();
         req.setEndpoint(url);
         req.setMethod('GET');
@@ -39,7 +46,9 @@ public with sharing class HolidayCheckerController {
             return response;
         }
 
+        // 4️⃣ Parse JSON response
         if (apiResponse.getStatusCode() == 200) {
+
             Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(apiResponse.getBody());
             Map<String, Object> responseMap = (Map<String, Object>) root.get('response');
 
@@ -52,13 +61,26 @@ public with sharing class HolidayCheckerController {
 
             List<String> holidayNames = new List<String>();
 
+            // 🎯 Only include holidays that match the user's birthday
             for (Object h : holidays) {
                 Map<String, Object> holidayData = (Map<String, Object>) h;
-                holidayNames.add((String) holidayData.get('name'));
+                Map<String, Object> dateInfo = (Map<String, Object>) holidayData.get('date');
+
+                // Parse ISO date string to avoid reserved keywords
+                String isoDate = (String) dateInfo.get('iso'); // e.g. "2025-03-21"
+                Date holidayDt = Date.valueOf(isoDate);
+
+                if (holidayDt.month() == birthMonth && holidayDt.day() == birthDay) {
+                    holidayNames.add((String) holidayData.get('name'));
+                }
             }
 
-            response.setMessage('Public holidays retrieved successfully.');
-            response.setDescription(String.join(holidayNames, ', '));
+            if (holidayNames.isEmpty()) {
+                response.setMessage('There are no public holidays on your birthday.');
+            } else {
+                response.setMessage('Public holidays on your birthday:');
+                response.setDescription(String.join(holidayNames, ', '));
+            }
 
         } else {
             response.setMessage('Error calling Calendarific: ' + apiResponse.getStatus());
@@ -72,63 +94,20 @@ public with sharing class HolidayCheckerController {
         Integer year = Integer.valueOf(yy);
 
         // SA ID logic: 00–24 = 2000–2024, else 1925–1999
-        if (year <= 24) return 2000 + year;
-        return 1900 + year;
+        return (year <= 24) ? 2000 + year : 1900 + year;
     }
 
-    // 🔒 FULL SOUTH AFRICAN ID VALIDATOR
-    private static Boolean isValidSouthAfricanId(String id) {
-        if (String.isBlank(id) || id.length() != 13) 
-            return false;
-
-        // Validate date (YYMMDD)
-        String birth = id.substring(0, 6);
-        if (!isValidDate(birth))
-            return false;
-
-        // Luhn check
-        return luhnCheck(id);
-    }
-
-    // DATE VALIDATION FOR YYMMDD
-    private static Boolean isValidDate(String birth) {
-        try {
-            Date d = Date.valueOf('20' + birth.substring(0, 2) 
-                + '-' + birth.substring(2, 4) 
-                + '-' + birth.substring(4, 6));
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
-   private static Boolean luhnCheck(String id) {
-    Integer sum = 0;
-    Boolean alt = false;
-
-    for (Integer i = id.length() - 1; i >= 0; i--) {
-        Integer digit = Integer.valueOf(id.substring(i, i + 1));
-
-        if (alt) {
-            digit *= 2;
-            if (digit > 9) digit -= 9;
-        }
-
-        sum += digit;
-        alt = !alt;
-    }
-
-    return (Math.mod(sum, 10) == 0);
-}
-
-
+    // ❇ RESPONSE CLASS — FIXED
     public class HolidaysResponse {
+
         @AuraEnabled public String message { get; private set; }
         @AuraEnabled public String year { get; private set; }
         @AuraEnabled public String description { get; private set; }
 
         public void setMessage(String message)   { this.message = message; }
         public void setYear(String year)         { this.year = year; }
-        public void setDescription(String descriptionValue) { this.description = descriptionValue; }
+        public void setDescription(String descriptionValue) {
+            this.description = descriptionValue;
+        }
     }
 }
