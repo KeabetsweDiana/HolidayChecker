@@ -47,7 +47,8 @@ public with sharing class HolidayCheckerController {
         }
 
         // 4️⃣ Parse JSON response
-        if (apiResponse.getStatusCode() == 200) {
+        if (apiResponse.getStatusCode() == 200) 
+        {
 
             Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(apiResponse.getBody());
             Map<String, Object> responseMap = (Map<String, Object>) root.get('response');
@@ -60,6 +61,9 @@ public with sharing class HolidayCheckerController {
             }
 
             List<String> holidayNames = new List<String>();
+            // List of ALL holidays for the year
+List<String> allYearHolidays = new List<String>();
+
 
             // 🎯 Only include holidays that match the user's birthday
             for (Object h : holidays) {
@@ -69,6 +73,11 @@ public with sharing class HolidayCheckerController {
                 // Parse ISO date string to avoid reserved keywords
                 String isoDate = (String) dateInfo.get('iso'); // e.g. "2025-03-21"
                 Date holidayDt = Date.valueOf(isoDate);
+
+                 // 1️⃣ Add ALL holidays for the year
+    allYearHolidays.add(
+        (String) holidayData.get('name') + ' (' + isoDate + ')'
+    );
 
                 if (holidayDt.month() == birthMonth && holidayDt.day() == birthDay) {
                     holidayNames.add((String) holidayData.get('name'));
@@ -88,14 +97,46 @@ public with sharing class HolidayCheckerController {
 
         return response;
     }
+    
+
+    private static void storeIdSearch(String idNumber, String name, Date birthDate, String gender, String citizen) {
+
+    // Try to find existing record
+    List<Holiday_Checker__c> records = [SELECT Id, Search_Count__c 
+                                        FROM Holiday_Checker__c 
+                                        WHERE Identity_Number__c = :idNumber 
+                                        LIMIT 1];
+
+    if (!records.isEmpty()) {
+        Holiday_Checker__c existing = records[0];
+        existing.Search_Count__c = (existing.Search_Count__c == null ? 1 : existing.Search_Count__c + 1);
+        existing.Search_Date__c = System.now();
+        update existing;
+    } else {
+        Holiday_Checker__c newRecord = new Holiday_Checker__c();
+        newRecord.Identity_Number__c = idNumber;
+        newRecord.Name = name != null ? name : 'Holiday Checker';
+        newRecord.Date_of_Birth__c = birthDate;
+        newRecord.Gender__c = gender;
+        newRecord.SA_Citizen__c = citizen;
+        newRecord.Search_Count__c = 1;
+        newRecord.Search_Date__c = System.now();
+        insert newRecord;
+    }
+}
+
+
 
     // Converts SA ID YY → full year YYYY
-    private static Integer getFullYearFromYY(String yy) {
+    private static Integer getFullYearFromYY(String yy) 
+    {
         Integer year = Integer.valueOf(yy);
 
         // SA ID logic: 00–24 = 2000–2024, else 1925–1999
         return (year <= 24) ? 2000 + year : 1900 + year;
     }
+
+    
 
     // ❇ RESPONSE CLASS — FIXED
     public class HolidaysResponse {
@@ -103,11 +144,17 @@ public with sharing class HolidayCheckerController {
         @AuraEnabled public String message { get; private set; }
         @AuraEnabled public String year { get; private set; }
         @AuraEnabled public String description { get; private set; }
+        @AuraEnabled public String allHolidays { get; private set; }
+        
+public void setAllHolidays(String value) { this.allHolidays = value; }
+
 
         public void setMessage(String message)   { this.message = message; }
         public void setYear(String year)         { this.year = year; }
         public void setDescription(String descriptionValue) {
             this.description = descriptionValue;
         }
+
+        
     }
 }

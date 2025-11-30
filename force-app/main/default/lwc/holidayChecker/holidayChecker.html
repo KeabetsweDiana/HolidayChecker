@@ -4,7 +4,9 @@
             <div class="custom-container">
 
                 <p class="instruction-text">
-                    Enter your ID number to see if there are any important public holidays on your date of birth
+                    This application recieves your South African ID number and queries the Calendarific API to see
+                    if there are any important public holidays on your date of birth.
+                    The program then returns your name, birth date, gender, citizenship and public holidays that are found.
                 </p>
 
                 <lightning-input class="white-label" 
@@ -39,8 +41,9 @@
 
                 <!-- HOLIDAYS FROM API -->
                 <template if:true={holidayDescription}>
-                    <p><b>Public holidays in your birth year:</b></p>
+                    <p><b>Public holidays on your birthdate:</b></p>
                     <p>{holidayDescription}</p>
+                    <p>{allHolidays}</p>
                 </template>
 
             </div>
