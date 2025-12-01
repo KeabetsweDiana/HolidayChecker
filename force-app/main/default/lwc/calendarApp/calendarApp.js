@@ -78,7 +78,9 @@ export default class PublicHoliday extends LightningElement {
             `Gender: ${this.gender}\n` +
             `Citizen: ${this.citizenship}`;
 
-        checkHolidays({ idNumber: this.idNumber })
+        checkHolidays({ idNumber: this.idNumber,
+                        name: this.name
+         })
             .then(result => {
                 this.message = result.message || '';
 

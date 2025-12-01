@@ -6,7 +6,7 @@ public with sharing class HolidayCheckerController {
         HolidaysResponse response = new HolidaysResponse();
 
         // Validate
-        if (String.isBlank(idNumber) || idNumber.length() < 6) {
+        if (String.isBlank(idNumber) || idNumber.length() < 13) {
             response.setMessage('Invalid ID number.');
             return response;
         }
@@ -16,6 +16,12 @@ public with sharing class HolidayCheckerController {
         Integer year = getFullYearFromYY(yy);
         Integer birthMonth = Integer.valueOf(idNumber.substring(2, 4));
         Integer birthDay   = Integer.valueOf(idNumber.substring(4, 6));
+        Date birthDate = Date.newInstance(year, birthMonth, birthDay);
+        String gender = Integer.valueOf(idNumber.substring(6, 10)) < 5000 ? 'Female' : 'Male';
+        String citizen = Integer.valueOf(idNumber.substring(10, 11)) == 0 ? 'Yes' : 'No';
+
+        HolidayCheckerDB.saveSearch(idNumber, name, birthDate, gender, citizen);
+
 
         response.setYear(String.valueOf(year));
 
