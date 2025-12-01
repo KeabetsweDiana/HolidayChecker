@@ -1,0 +1,56 @@
+<template>
+    <div class="slds-media slds-media_center">
+        <div class="slds-media__body">
+            <div class="custom-container">
+
+                <p class="instruction-text">
+                    <b>This Application recieves your ID number and extracts your birth date,</b>
+                    <b>to find out what holidays fall on birth date and birth year.</b>
+                </p>
+
+                <lightning-input class="white-label" 
+                                 label="Enter ID Number" 
+                                 type="text" 
+                                 value={idNumber} 
+                                 onchange={handleIdChange}>
+                </lightning-input>
+
+                <lightning-input class="white-label" 
+                                 label="Enter your name" 
+                                 type="text" 
+                                 value={name} 
+                                 onchange={handleNameChange}>
+                </lightning-input>
+
+                <lightning-button class="button" 
+                                  label="Search" 
+                                  onclick={searchHolidays} 
+                                  disabled={isSearchDisabled}>
+                </lightning-button>
+
+                <!-- USER DETAILS -->
+                <template if:true={description}>
+                    <p>{description}</p>
+                </template>
+
+                <!-- HOLIDAYS ON BIRTH DATE -->
+                <template if:true={holidayDescription}>
+                    <p><b>Public holidays on your birth date:</b></p>
+                    <p>{holidayDescription}</p>
+                </template>
+
+                <!-- HOLIDAYS IN BIRTH YEAR -->
+                <template if:true={allHolidays}>
+                    <p><b>Public holidays in your birth year:</b></p>
+                    <p>{allHolidays}</p>
+                </template>
+
+                <!-- ERROR MESSAGE -->
+                <template if:true={showError}>
+                    <div class="error-message">{errorMessage}</div>
+                </template>
+
+            </div>
+        </div>
+    </div>
+</template>
