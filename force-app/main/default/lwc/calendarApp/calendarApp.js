@@ -17,14 +17,10 @@ export default class PublicHoliday extends LightningElement {
     @track year = '';
     @track allHolidaysList = [];
 
+    // Input handlers
     handleIdChange(event) {
         this.idNumber = event.target.value;
-        this.showError = false;
-        this.errorMessage = '';
-
-        this.description = null;
-        this.holidayDescription = null;
-        this.allHolidaysList = [];
+        this.resetMessages();
     }
 
     handleNameChange(event) {
@@ -33,44 +29,63 @@ export default class PublicHoliday extends LightningElement {
         this.errorMessage = '';
     }
 
+    resetMessages() {
+        this.showError = false;
+        this.errorMessage = '';
+        this.description = null;
+        this.holidayDescription = null;
+        this.allHolidaysList = [];
+        this.message = '';
+        this.isValidCheckDigit = true;
+    }
+
+    // Enable/disable search button
     get isSearchDisabled() {
         return !this.isValidIdNumber(this.idNumber);
     }
 
+    // Validate SA ID number
     isValidIdNumber(idNumber) {
-        return idNumber && idNumber.length === 13 && /^[0-9]+$/.test(idNumber);
+        if (!/^\d{13}$/.test(idNumber)) return false;
+
+        // Luhn check
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            let digit = parseInt(idNumber.charAt(i), 10);
+            if (i % 2 === 0) {
+                sum += digit;
+            } else {
+                let double = digit * 2;
+                sum += Math.floor(double / 10) + (double % 10);
+            }
+        }
+        let checkDigit = (10 - (sum % 10)) % 10;
+        return checkDigit === parseInt(idNumber.charAt(12), 10);
     }
 
     searchHolidays() {
-        this.description = null;
-        this.holidayDescription = null;
-        this.allHolidaysList = [];
-        this.errorMessage = '';
-        this.showError = false;
-        this.message = '';
-        this.isValidCheckDigit = true;
+        this.resetMessages();
 
         if (!this.isValidIdNumber(this.idNumber)) {
             this.showError = true;
-            this.errorMessage = 'Invalid ID number. Please enter a valid 13-digit ID number.';
+            this.errorMessage = 'Invalid ID number. Please enter a valid 13-digit SA ID.';
             return;
         }
 
+        // Extract birth date
         const yearPrefix = this.idNumber.substring(0, 2) < 50 ? '20' : '19';
-        const fullYear = yearPrefix + this.idNumber.substring(0, 2);
-
+        const fullYear = parseInt(yearPrefix + this.idNumber.substring(0, 2));
         const tempDate = new Date(fullYear, this.idNumber.substring(2, 4) - 1, this.idNumber.substring(4, 6));
-
         const idDay = tempDate.getDate().toString().padStart(2, '0');
         const idMonth = (tempDate.getMonth() + 1).toString().padStart(2, '0');
-
         this.fullDate = `${idDay}-${idMonth}-${fullYear}`;
 
-        const genderCode = this.idNumber.substring(6, 10);
-        this.gender = parseInt(genderCode) < 5000 ? 'Female' : 'Male';
+        // Gender & citizenship
+        const genderCode = parseInt(this.idNumber.substring(6, 10), 10);
+        this.gender = genderCode < 5000 ? 'Female' : 'Male';
+        this.citizenship = parseInt(this.idNumber.substring(10, 11), 10) === 0 ? 'Yes' : 'No';
 
-        this.citizenship = parseInt(this.idNumber.substring(10, 11)) === 0 ? 'Yes' : 'No';
-
+        // Build user description
         this.description =
             `Name: ${this.name}\n` +
             `ID Number: ${this.idNumber}\n` +
@@ -78,39 +93,27 @@ export default class PublicHoliday extends LightningElement {
             `Gender: ${this.gender}\n` +
             `Citizen: ${this.citizenship}`;
 
-        checkHolidays({ idNumber: this.idNumber,
-                        name: this.name
-         })
+        // Call Apex
+        checkHolidays({ idNumber: this.idNumber, name: this.name })
             .then(result => {
-                this.message = result.message || '';
-
                 if (result.message && result.message.toLowerCase().includes('invalid')) {
                     this.showError = true;
                     this.errorMessage = result.message;
-                    this.holidayDescription = null;
-                    this.allHolidaysList = [];
-                    this.description = null;
-                    this.year = '';
+                    this.resetMessages();
                     return;
                 }
 
                 this.showError = false;
-
-                this.holidayDescription =
-                    result.description || 'No public holidays found for your birthday.';
-
-                this.allHolidaysList =
-                    result.allHolidays ? result.allHolidays.split('\n') : [];
-
+                this.holidayDescription = result.description || 'No public holidays found for your birthday.';
+                this.allHolidaysList = result.allHolidays ? result.allHolidays.split('\n') : [];
                 this.year = result.year;
+                this.message = result.message || '';
             })
             .catch(error => {
                 console.error('Apex Error:', error);
                 this.showError = true;
                 this.errorMessage = 'A server error occurred.';
-                this.holidayDescription = null;
-                this.allHolidaysList = [];
-                this.description = null;
+                this.resetMessages();
             });
     }
 }
