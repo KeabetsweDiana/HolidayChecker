@@ -20,7 +20,39 @@ export default class PublicHoliday extends LightningElement {
     // Input handlers
     handleIdChange(event) {
         this.idNumber = event.target.value;
-        this.resetMessages();
+
+        // Inline validation as the user types
+        if (this.idNumber.length === 0) {
+            this.showError = false;
+            this.errorMessage = '';
+            return;
+        }
+
+        if (!/^\d+$/.test(this.idNumber)) {
+            this.showError = true;
+            this.errorMessage = 'ID must contain only digits.';
+            return;
+        }
+
+        if (this.idNumber.length < 13) {
+            this.showError = true;
+            this.errorMessage = 'ID must be 13 digits long.';
+            return;
+        }
+
+        // If 13 digits, validate all components
+        if (this.idNumber.length === 13) {
+            const validationError = this.getValidationError(this.idNumber);
+            if (validationError) {
+                this.showError = true;
+                this.errorMessage = validationError;
+                return;
+            }
+        }
+
+        // Valid ID
+        this.showError = false;
+        this.errorMessage = '';
     }
 
     handleNameChange(event) {
@@ -39,16 +71,42 @@ export default class PublicHoliday extends LightningElement {
         this.isValidCheckDigit = true;
     }
 
-    // Enable/disable search button
-    get isSearchDisabled() {
-        return !this.isValidIdNumber(this.idNumber);
+    // Get specific validation error message
+    getValidationError(idNumber) {
+        const yy = parseInt(idNumber.substring(0, 2), 10);
+        const mm = parseInt(idNumber.substring(2, 4), 10);
+        const dd = parseInt(idNumber.substring(4, 6), 10);
+        
+        // Validate date of birth
+        if (mm < 1 || mm > 12) {
+            return 'Invalid birth month. Month must be between 01 and 12.';
+        }
+        if (dd < 1 || dd > 31) {
+            return 'Invalid birth day. Day must be between 01 and 31.';
+        }
+
+        // Validate gender code (digits 7-10: must be 0000-9999)
+        const genderCode = parseInt(idNumber.substring(6, 10), 10);
+        if (genderCode < 0 || genderCode > 9999) {
+            return 'Invalid gender code. Must be between 0000 and 9999.';
+        }
+
+        // Validate citizenship digit (digit 11: must be 0 or 1)
+        const citizenshipDigit = parseInt(idNumber.charAt(10), 10);
+        if (citizenshipDigit !== 0 && citizenshipDigit !== 1) {
+            return 'Invalid citizenship digit. Must be 0 (SA citizen) or 1 (permanent resident).';
+        }
+
+        // Validate checksum
+        if (!this.isValidChecksum(idNumber)) {
+            return 'Invalid checksum. The last digit does not match the ID number.';
+        }
+
+        return null; // No error
     }
 
-    // Validate SA ID number
-    isValidIdNumber(idNumber) {
-        if (!/^\d{13}$/.test(idNumber)) return false;
-
-        // Luhn check
+    // Validate checksum using Luhn algorithm
+    isValidChecksum(idNumber) {
         let sum = 0;
         for (let i = 0; i < 12; i++) {
             let digit = parseInt(idNumber.charAt(i), 10);
@@ -61,6 +119,12 @@ export default class PublicHoliday extends LightningElement {
         }
         let checkDigit = (10 - (sum % 10)) % 10;
         return checkDigit === parseInt(idNumber.charAt(12), 10);
+    }
+
+    // Validate SA ID number
+    isValidIdNumber(idNumber) {
+        if (!/^\d{13}$/.test(idNumber)) return false;
+        return this.getValidationError(idNumber) === null;
     }
 
     searchHolidays() {
@@ -91,7 +155,7 @@ export default class PublicHoliday extends LightningElement {
             `ID Number: ${this.idNumber}\n` +
             `Birth Date: ${this.fullDate}\n` +
             `Gender: ${this.gender}\n` +
-            `Citizen: ${this.citizenship}`;
+            `Citizen: ${this.citizenship}`
 
         // Call Apex
         checkHolidays({ idNumber: this.idNumber, name: this.name })
