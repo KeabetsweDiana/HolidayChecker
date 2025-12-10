@@ -5,7 +5,7 @@ public with sharing class HolidayCheckerController {
 
         HolidaysResponse response = new HolidaysResponse();
 
-        // Validate
+        
         if (String.isBlank(idNumber) || idNumber.length() < 13) {
             response.setMessage('Invalid ID number.');
             return response;
@@ -21,14 +21,10 @@ public with sharing class HolidayCheckerController {
         String citizen = Integer.valueOf(idNumber.substring(10, 11)) == 0 ? 'Yes' : 'No';
 
         
-<<<<<<< HEAD
-=======
-
->>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
 
         response.setYear(String.valueOf(year));
 
-        // API URL
+        // API Endpoint
         String apiKey = '24c5e86734eb44dc4a962826324a5546e74dc42f';
         String country = 'ZA';
 
@@ -53,7 +49,7 @@ public with sharing class HolidayCheckerController {
             return response;
         }
 
-        // Parse JSON
+        
         if (apiResponse.getStatusCode() == 200) {
 
             Map<String, Object> root = 
@@ -68,11 +64,11 @@ public with sharing class HolidayCheckerController {
                 return response;
             }
 
-            // Lists
+            
             List<String> birthdayHolidays = new List<String>();
             List<String> allYearHolidays = new List<String>();
 
-            // Loop holidays
+            
             for (Object h : holidays) {
 
                 Map<String, Object> holidayData = (Map<String, Object>) h;
@@ -84,19 +80,19 @@ public with sharing class HolidayCheckerController {
 
                 String holidayName = (String) holidayData.get('name');
 
-                // ⭐ Add to all holidays
+                
                 allYearHolidays.add(holidayName + ' (' + isoDate + ')');
 
-                // ⭐ Check if holiday matches birthday
+                
                 if (holidayDt.month() == birthMonth && holidayDt.day() == birthDay) {
                     birthdayHolidays.add(holidayName);
                 }
             }
 
-            // ⭐ Return all holidays for the year
+            
             response.setAllHolidays(String.join(allYearHolidays, '\n'));
 
-            // ⭐ Return birthday holidays
+            
             if (!birthdayHolidays.isEmpty()) {
                 response.setMessage('Public holidays on your birth date:');
                 response.setDescription(String.join(birthdayHolidays, ', '));
@@ -117,7 +113,7 @@ public with sharing class HolidayCheckerController {
         return (year <= 24) ? 2000 + year : 1900 + year;
     }
 
-    // RESPONSE CLASS
+
     public class HolidaysResponse {
         @AuraEnabled public String message { get; private set; }
         @AuraEnabled public String year { get; private set; }

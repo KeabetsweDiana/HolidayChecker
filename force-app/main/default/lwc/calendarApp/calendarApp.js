@@ -17,11 +17,11 @@ export default class PublicHoliday extends LightningElement {
     @track year = '';
     @track allHolidaysList = [];
 
-    // Input handlers
+    
     handleIdChange(event) {
         this.idNumber = event.target.value;
 
-        // Inline validation as the user types
+        
         if (this.idNumber.length === 0) {
             this.showError = false;
             this.errorMessage = '';
@@ -40,11 +40,7 @@ export default class PublicHoliday extends LightningElement {
             return;
         }
 
-<<<<<<< HEAD
-        // If 13 digits, validate checksum and format
-=======
-        // If 13 digits, validate all components
->>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
+        
         if (this.idNumber.length === 13) {
             const validationError = this.getValidationError(this.idNumber);
             if (validationError) {
@@ -54,7 +50,7 @@ export default class PublicHoliday extends LightningElement {
             }
         }
 
-        // Valid ID
+        
         this.showError = false;
         this.errorMessage = '';
     }
@@ -75,13 +71,13 @@ export default class PublicHoliday extends LightningElement {
         this.isValidCheckDigit = true;
     }
 
-    // Get specific validation error message
+    
     getValidationError(idNumber) {
         const yy = parseInt(idNumber.substring(0, 2), 10);
         const mm = parseInt(idNumber.substring(2, 4), 10);
         const dd = parseInt(idNumber.substring(4, 6), 10);
         
-        // Validate date of birth
+        
         if (mm < 1 || mm > 12) {
             return 'Invalid birth month. Month must be between 01 and 12.';
         }
@@ -89,27 +85,27 @@ export default class PublicHoliday extends LightningElement {
             return 'Invalid birth day. Day must be between 01 and 31.';
         }
 
-        // Validate gender code (digits 7-10: must be 0000-9999)
+        
         const genderCode = parseInt(idNumber.substring(6, 10), 10);
         if (genderCode < 0 || genderCode > 9999) {
             return 'Invalid gender code. Must be between 0000 and 9999.';
         }
 
-        // Validate citizenship digit (digit 11: must be 0 or 1)
+        
         const citizenshipDigit = parseInt(idNumber.charAt(10), 10);
         if (citizenshipDigit !== 0 && citizenshipDigit !== 1) {
             return 'Invalid citizenship digit. Must be 0 (SA citizen) or 1 (permanent resident).';
         }
 
-        // Validate checksum
+        
         if (!this.isValidChecksum(idNumber)) {
             return 'Invalid checksum. The last digit does not match the ID number.';
         }
 
-        return null; // No error
+        return null; 
     }
 
-    // Validate checksum using Luhn algorithm
+    
     isValidChecksum(idNumber) {
         let sum = 0;
         for (let i = 0; i < 12; i++) {
@@ -125,15 +121,7 @@ export default class PublicHoliday extends LightningElement {
         return checkDigit === parseInt(idNumber.charAt(12), 10);
     }
 
-<<<<<<< HEAD
-    // Enable/disable search button
-    get isSearchDisabled() {
-        return !this.isValidIdNumber(this.idNumber);
-    }
-
-=======
->>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
-    // Validate SA ID number
+    
     isValidIdNumber(idNumber) {
         if (!/^\d{13}$/.test(idNumber)) return false;
         return this.getValidationError(idNumber) === null;
@@ -161,7 +149,7 @@ export default class PublicHoliday extends LightningElement {
         this.gender = genderCode < 5000 ? 'Female' : 'Male';
         this.citizenship = parseInt(this.idNumber.substring(10, 11), 10) === 0 ? 'Yes' : 'No';
 
-        // Build user description
+        
         this.description =
             `Name: ${this.name}\n` +
             `ID Number: ${this.idNumber}\n` +
@@ -169,7 +157,7 @@ export default class PublicHoliday extends LightningElement {
             `Gender: ${this.gender}\n` +
             `Citizen: ${this.citizenship}`
 
-        // Call Apex
+        
         checkHolidays({ idNumber: this.idNumber, name: this.name })
             .then(result => {
                 if (result.message && result.message.toLowerCase().includes('invalid')) {

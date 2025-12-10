@@ -2,7 +2,7 @@ public with sharing class HolidayCheckerDB {
 
     public static void saveSearch(String idNumber, String name, Date birthDate, String gender, String citizen) {
 
-        // Query existing record
+        
         List<Holiday_Checker__c> records = [
             SELECT Id, Search_Count__c 
             FROM Holiday_Checker__c 
@@ -17,7 +17,7 @@ public with sharing class HolidayCheckerDB {
             existing.Search_Date__c = System.now();
             update existing;
         } else {
-            // Insert new record
+            
             Holiday_Checker__c newRecord = new Holiday_Checker__c(
                 Identity_Number__c = idNumber,
                 Name = (name != null ? name : 'Holiday Checker'),
