@@ -21,6 +21,10 @@ public with sharing class HolidayCheckerController {
         String citizen = Integer.valueOf(idNumber.substring(10, 11)) == 0 ? 'Yes' : 'No';
 
         
+<<<<<<< HEAD
+=======
+
+>>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
 
         response.setYear(String.valueOf(year));
 

@@ -40,7 +40,11 @@ export default class PublicHoliday extends LightningElement {
             return;
         }
 
+<<<<<<< HEAD
         // If 13 digits, validate checksum and format
+=======
+        // If 13 digits, validate all components
+>>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
         if (this.idNumber.length === 13) {
             const validationError = this.getValidationError(this.idNumber);
             if (validationError) {
@@ -121,11 +125,14 @@ export default class PublicHoliday extends LightningElement {
         return checkDigit === parseInt(idNumber.charAt(12), 10);
     }
 
+<<<<<<< HEAD
     // Enable/disable search button
     get isSearchDisabled() {
         return !this.isValidIdNumber(this.idNumber);
     }
 
+=======
+>>>>>>> 53c09fbd14698a180491c0bbaf40506a47797ad8
     // Validate SA ID number
     isValidIdNumber(idNumber) {
         if (!/^\d{13}$/.test(idNumber)) return false;
@@ -160,7 +167,7 @@ export default class PublicHoliday extends LightningElement {
             `ID Number: ${this.idNumber}\n` +
             `Birth Date: ${this.fullDate}\n` +
             `Gender: ${this.gender}\n` +
-            `Citizen: ${this.citizenship}`;
+            `Citizen: ${this.citizenship}`
 
         // Call Apex
         checkHolidays({ idNumber: this.idNumber, name: this.name })
