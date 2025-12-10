@@ -20,8 +20,7 @@ public with sharing class HolidayCheckerController {
         String gender = Integer.valueOf(idNumber.substring(6, 10)) < 5000 ? 'Female' : 'Male';
         String citizen = Integer.valueOf(idNumber.substring(10, 11)) == 0 ? 'Yes' : 'No';
 
-        HolidayCheckerDB.saveSearch(idNumber, name, birthDate, gender, citizen);
-
+        
 
         response.setYear(String.valueOf(year));
 

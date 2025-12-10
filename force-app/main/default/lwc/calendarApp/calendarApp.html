@@ -5,7 +5,7 @@
 
                 <p class="instruction-text">
                     <b>This Application recieves your ID number and extracts your birth date,</b>
-                    <b>to find out what holidays fall on birth date and birth year.</b>
+                    <b> to find out what holidays fall on birth date and birth year.</b>
                 </p>
 
                 <lightning-input class="white-label" 
@@ -40,9 +40,11 @@
                 </template>
 
                 <!-- HOLIDAYS IN BIRTH YEAR -->
-                <template if:true={allHolidays}>
+                <template if:true={allHolidaysList}>
                     <p><b>Public holidays in your birth year:</b></p>
-                    <p>{allHolidays}</p>
+                    <template for:each={allHolidaysList} for:item="holiday">
+                        <p key={holiday}>{holiday}</p>
+                    </template>
                 </template>
 
                 <!-- ERROR MESSAGE -->
